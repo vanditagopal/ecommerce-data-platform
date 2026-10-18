@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17352d">
+  <title>Order Operations | Commerce Data Platform</title>
+  <link rel="stylesheet" href="/assets/dashboard.css">
+  <script src="/assets/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Commerce Data Platform home">
+      <span class="brand-mark" aria-hidden="true">E</span>
+      <span>Commerce <span class="brand-divider">/</span> Data Platform</span>
+    </a>
+    <div class="topbar-tools">
+      <span class="environment"><span class="environment-dot"></span>LOCAL</span>
+      <a class="docs-link" href="/docs">API DOCS</a>
+      <button class="refresh-button" id="refresh-button" type="button" title="Refresh dashboard data">
+        <span class="refresh-icon" aria-hidden="true">&#8635;</span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">OPERATIONS <span>/</span> ORDERS</p>
+        <h1 id="page-title">Order operations</h1>
+        <p class="page-description">Latest batch health and order activity.</p>
+      </div>
+      <div class="overall-state" id="overall-state" data-state="loading" role="status" aria-live="polite">
+        <span class="state-indicator"></span>
+        <span id="overall-state-label">CONNECTING</span>
+      </div>
+    </section>
+
+    <div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
+
+    <section class="pipeline-strip" aria-label="Data pipeline status">
+      <div class="pipeline-step" id="raw-step">
+        <span class="step-index">01</span>
+        <div><span class="step-name">RAW INPUT</span><span class="step-value" id="raw-value">Waiting</span></div>
+      </div>
+      <span class="pipeline-arrow" aria-hidden="true">&#8594;</span>
+      <div class="pipeline-step" id="quality-step">
+        <span class="step-index">02</span>
+        <div><span class="step-name">QUALITY GATE</span><span class="step-value" id="quality-value">Waiting</span></div>
+      </div>
+      <span class="pipeline-arrow" aria-hidden="true">&#8594;</span>
+      <div class="pipeline-step" id="bronze-step">
+        <span class="step-index">03</span>
+        <div><span class="step-name">BRONZE</span><span class="step-value" id="bronze-value">Waiting</span></div>
+      </div>
+      <span class="pipeline-arrow" aria-hidden="true">&#8594;</span>
+      <div class="pipeline-step pipeline-step-muted" id="silver-step">
+        <span class="step-index">04</span>
+        <div><span class="step-name">SILVER</span><span class="step-value">Not exposed by API</span></div>
+      </div>
+      <span class="checked-at" id="checked-at">Not checked</span>
+    </section>
+
+    <section class="metrics-grid" aria-label="Order metrics">
+      <article class="metric metric-green">
+        <p class="metric-label">INPUT RECORDS</p>
+        <p class="metric-value" id="input-count" aria-live="polite">--</p>
+        <p class="metric-foot">Latest validated batch</p>
+      </article>
+      <article class="metric metric-blue">
+        <p class="metric-label">ACCEPTED</p>
+        <p class="metric-value" id="accepted-count">--</p>
+        <p class="metric-foot" id="accepted-rate">Awaiting quality report</p>
+      </article>
+      <article class="metric metric-coral">
+        <p class="metric-label">REJECTED</p>
+        <p class="metric-value" id="rejected-count">--</p>
+        <p class="metric-foot">Records blocked by quality rules</p>
+      </article>
+      <article class="metric metric-yellow">
+        <p class="metric-label">BRONZE ROWS</p>
+        <p class="metric-value" id="bronze-count">--</p>
+        <p class="metric-foot">Available for downstream queries</p>
+      </article>
+    </section>
+
+    <section class="quality-section" aria-labelledby="quality-title">
+      <div class="section-heading quality-heading">
+        <div>
+          <p class="eyebrow">VALIDATION</p>
+          <h2 id="quality-title">Data quality</h2>
+        </div>
+        <p class="quality-summary" id="quality-summary">Waiting for latest report</p>
+      </div>
+      <div class="quality-content">
+        <div class="quality-score" aria-label="Accepted record share">
+          <span class="score-number" id="quality-score">--</span>
+          <span class="score-caption">accepted</span>
+        </div>
+        <div class="reason-list" id="reason-list" aria-live="polite">
+          <p class="empty-inline">Quality rules will appear when the report is available.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="orders-section" aria-labelledby="orders-title">
+      <div class="section-heading orders-heading">
+        <div>
+          <p class="eyebrow">BRONZE DATASET</p>
+          <h2 id="orders-title">Recent orders</h2>
+        </div>
+        <span class="page-count" id="page-count" aria-live="polite">--</span>
+      </div>
+
+      <div class="table-toolbar">
+        <label class="search-control">
+          <span class="visually-hidden">Search this page by order or customer ID</span>
+          <span class="search-icon" aria-hidden="true">&#9906;</span>
+          <input id="order-search" type="search" placeholder="Search this page" autocomplete="off">
+        </label>
+        <label class="select-control">
+          <span class="visually-hidden">Filter this page by order status</span>
+          <select id="status-filter">
+            <option value="">All statuses</option>
+            <option value="PLACED">Placed</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="RETURNED">Returned</option>
+          </select>
+        </label>
+        <label class="select-control page-size-control">
+          <span class="visually-hidden">Rows per page</span>
+          <select id="page-size">
+            <option value="10">10 rows</option>
+            <option value="20" selected>20 rows</option>
+            <option value="50">50 rows</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="table-wrap" id="table-wrap" aria-busy="true">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">ORDER ID</th>
+              <th scope="col">CUSTOMER</th>
+              <th scope="col">ORDER DATE</th>
+              <th scope="col">STATUS</th>
+              <th scope="col" class="amount-column">TOTAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr><td class="table-message" colspan="5">Loading order data</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span class="pagination-info" id="pagination-info">Page 1</span>
+        <div class="pagination-actions">
+          <button id="previous-page" type="button" aria-label="Previous page" disabled>&#8592;</button>
+          <button id="next-page" type="button" aria-label="Next page" disabled>&#8594;</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <span>COMMERCE DATA PLATFORM</span>
+      <span id="footer-health">API connection pending</span>
+    </footer>
+  </main>
+</body>
+</html>

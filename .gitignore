@@ -6,3 +6,10 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+test-results/
+data/raw/
+data/generated/
+data/bronze/
+data/silver/
+data/quality/
+data/test_parquet/

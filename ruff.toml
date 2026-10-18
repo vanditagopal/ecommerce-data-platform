@@ -1,0 +1,3 @@
+[lint.per-file-ignores]
+"src/api/app.py" = ["E402"]
+"src/pipelines/orders_pipeline.py" = ["E402"]
